@@ -1,0 +1,128 @@
+#This is another practice of the INE platform course
+
+Challenge:
+
+A company called AwdMgmt hired me to perform a security test on their internal web application and
+a your hosts.
+
+Goals:
+
+        - Find the web server
+        - Access restricted areas
+
+
+--------------------------------------
+FIND ACTIVE NETWORK HOSTS
+--------------------------------------
+
+Since we are not given any information about the network and its hosts here, I must find them
+with the sweep ping technique
+
+I found three hosts!
+
+10.104.11.50 Linux
+10.104.11.96 Linux Debian
+10.104.11.198 Linux
+
+The operating system I identified was thanks to the ping TTL
+
+-------------------------------------
+PORT SCAN
+-------------------------------------
+
+I will perform a scan with the following options:
+
+nmap -sS -sV --min-rate 8000 -p- 10.104.11.50,96,198 -o deep-scan.txt
+
+10.104.11.50 Linux Protected by a firewall 0 open ports
+10.104.11.96 Linux 22 and 80 open web server (SSH and HTTP)
+10.104.11.198 Open Linux data server 22 and 3306 (SSH and MySQL)
+
+The first host didn't have any open ports, so I think it's being protected by some kind of
+firewall, in addition there is a web server and data server.
+
+Web server:
+        22 SSH OpenSSH 6.0p1 Debian 4 + deb7u2 (protocol 2.0)
+        80 HTTP Apache httpd 2.2.22 ((Debian))
+
+Data server:
+        22 SSH OpenSSH 6.0p1 Debian 4 + deb7u2 (protocol 2.0)
+        3306 MySQL MySQL 5.5.38
+
+------------------------------------
+WEB APPLICATION
+------------------------------------
+
+To review the web app, I will first review it manually and see if I can find something, in the
+source code there is nothing, I will do a directory search with the dirsearch tool.
+
+Reviewing the page I find that there is a user called ADMIN, there is a form to log in
+but nothing more interesting.
+
+The dirsearch command it uses is:
+
+dirsearch -u http://10.104.11.96 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
+
+The list I am using is directory-list-2.3-medium.txt which is included in kali
+
+I found a few interesting directories, they will be included in the report folder.
+
+The child directories:
+
+/ images
+/personal
+/default
+/style
+/announce
+/include
+/ tmp
+/index.php/login/
+/signup.php
+
+The most interesting directories are:
+
+/ staff: In it I found a note about the developers, in which it gives me clues to look for certain
+extensions
+
+/ include: There are three files, the most interesting is "config.old", there are some credentials
+with which you could log into a database.
+
+The credentials are: awd: UcuicjsQgG0FILdjdL8D
+
+I will use them to start session in mysql
+
+Use the following command to access the data server but they DO NOT work
+mysql -u awd -p UcuicjsQgG0FILdjdL8D -h 10.104.11.198 1 ⨯
+
+/signup.php: In it there are some credentials that seem to be the most up-to-date!
+
+Child credentials: awdmgmt: UChxKQk96dVtM07
+
+The credentials I found for the second time DOES work!
+
+Changed database
+MySQL [awdmgmt_accounts]> show tables;
++ ---------------------------- +
+| Tables_in_awdmgmt_accounts |
++ ---------------------------- +
+| accounts |
++ ---------------------------- +
+1 row altogether (0.123 s)
+
+MySQL [awdmgmt_accounts]> select * from accounts;
++ ---- + -------------------- + ---------- + ------------ - +
+| id | email | password | displayname |
++ ---- + -------------------- + ---------- + ------------ - +
+| 1 | admin@awdmgmt.labs | ENS7VvW8 | Admin |
++ ---- + -------------------- + ---------- + ------------ - +
+1 row altogether (0.115 sec)
+
+I used them to log into the web application and it worked!
+
+
+------------------------------------
+CONCLUSION
+------------------------------------
+
+In this laboratory I learned about the small mistakes that can be made in a company, making copies
+backup in an NOT safe place, notes to developers, etc.

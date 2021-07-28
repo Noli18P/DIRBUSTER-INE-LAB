@@ -1,0 +1,8 @@
+# Nmap 7.91 scan initiated Tue Jul 27 17:15:09 2021 as: nmap -sn -o nmap-hosts-alive.txt 10.104.11.50/24
+Nmap scan report for 10.104.11.50
+Host is up (0.000057s latency).
+Nmap scan report for 10.104.11.96
+Host is up (0.12s latency).
+Nmap scan report for 10.104.11.198
+Host is up (0.12s latency).
+# Nmap done at Tue Jul 27 17:15:22 2021 -- 256 IP addresses (3 hosts up) scanned in 12.39 seconds

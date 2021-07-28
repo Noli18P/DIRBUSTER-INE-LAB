@@ -1,0 +1,26 @@
+<?php
+$dbhostname='127.0.0.1';
+$dbuser='awd';
+$dbpassword='UcuicjsQgG0FILdjdL8D';
+$dbname='awd';
+
+$connection = mysqli_connect($dbhostname, $dbuser, $dbpassword, $dbname) or die("Unable to connect to MySQL");
+
+/*
+$pages = array (
+    'index.php?a=announce.txt' => 'Home',
+    'news.php' => 'News',
+    'pubs.php' => 'Publications',
+    '#' => 'Sing up'
+);
+*/
+
+$pages = array (
+    'index.php' => 'Home',
+    'news.php' => 'News',
+    'awards.php' => 'Awards',
+    'offline.php' => 'Sing up'
+);
+
+?>
+

@@ -1,0 +1,131 @@
+#Esta es otra práctica del curso de la plataforma de INE
+
+Reto:
+
+Una empresa llamada AwdMgmt me contrató para realizar una prueba de seguridad a su aplicacion web interna y
+a sus hosts.
+
+Metas:
+
+	- Encontrar el servidor web
+	- Acceder a áreas restringidas
+
+
+--------------------------------------
+ENCONTRAR LOS HOSTS DE LA RED ACTIVOS
+--------------------------------------
+
+Debido a que aquí no se nos proporciono nada de información sobre la red y sus hosts, debo encontrarlos
+con la técnica de ping sweeping
+
+Encontre tres hosts!
+
+10.104.11.50	Linux	  
+10.104.11.96	Linux	Debian
+10.104.11.198	Linux	 
+
+El sistema operativo que identifiqué fue gracias al TTL de ping
+
+-------------------------------------
+ESCANEO DE PUERTOS
+-------------------------------------
+
+Realizare un escaneo con las siguientes opciones:
+
+nmap -sS -sV --min-rate 8000 -p- 10.104.11.50,96,198 -o deep-scan.txt
+
+10.104.11.50    Linux   Protegido por un firewall	0 puertos abiertos
+10.104.11.96    Linux   Web server			22 y 80 abiertos (SSH y HTTP)
+10.104.11.198   Linux	Data server			22 y 3306 abiertos (SSH y MySQL)
+
+El primer host no tuvo ningun puerto abierto, así que creo que esta siendo protegido por alǵun tipo de
+firewall, además hay un servidor web y servidor de datos.
+
+Web Server:
+	22	SSH	OpenSSH 6.0p1 Debian 4+deb7u2 (protocol 2.0)
+	80	HTTP    Apache httpd 2.2.22 ((Debian))
+
+Data Server:
+	22	SSH	OpenSSH 6.0p1 Debian 4+deb7u2 (protocol 2.0)
+	3306	MySQL	MySQL 5.5.38
+
+------------------------------------
+APLICACIÓN WEB
+------------------------------------
+
+Para revisar la aplicación web, primero la revisaré de forma manual y ver si puedo encontrar algo, en el 
+código fuente no hay nada, haré una busqueda de directorios con la herramienta dirsearch.
+
+Revisando la página me encuentro que hay un usuario llamado ADMIN, hay un formulario para iniciar sesión
+peroo nada más interesante.
+
+EL comando de dirsearch que uśe es:
+
+dirsearch -u http://10.104.11.96 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt 
+
+La lista que estoy usando es directory-list-2.3-medium.txt que esta incluida en kali
+
+Encontré unos cuantos directorios interesantes, estarán incluidos en la carpeta de reporte!
+
+Los directorios son:
+
+/images
+/staff
+/default
+/style 
+/announce
+/include
+/tmp
+/index.php/login/
+/signup.php
+
+Los directorios más interesantes son:
+
+/staff: En el encontré una nota sobre los desarrolladores, en la que me da pistas para buscar ciertas 
+extensiones
+
+/include: Ahí están tres archivos, el mas interesante es "config.old", ahí existen algunas credenciales
+con las que podría inciar sesión en una base de datos.
+
+Las credenciales son: awd:UcuicjsQgG0FILdjdL8D
+
+Las usaré para inciar sesión en mysql
+
+Usé el siguiente comando para acceder a el servidor de datos pero NO funcionan
+mysql -u awd -p UcuicjsQgG0FILdjdL8D -h 10.104.11.198                                                  1 ⨯
+
+/signup.php: En el hay unas credenciales que al parecer son las más actualizadas!
+
+Las credenciales son: awdmgmt:UChxKQk96dVtM07
+
+Las credenciales que encontré por segunda vez SI funcionan!
+
+Database changed
+MySQL [awdmgmt_accounts]> show tables;
++----------------------------+
+| Tables_in_awdmgmt_accounts |
++----------------------------+
+| accounts                   |
++----------------------------+
+1 row in set (0.123 sec)
+
+MySQL [awdmgmt_accounts]> select * from accounts;
++----+--------------------+----------+-------------+
+| id | email              | password | displayname |
++----+--------------------+----------+-------------+
+|  1 | admin@awdmgmt.labs | ENS7VvW8 | Admin       |
++----+--------------------+----------+-------------+
+1 row in set (0.115 sec)
+
+Las use para inciar sesión en la aplicación web y funcionó!
+
+
+------------------------------------
+CONCLUSIÓN
+------------------------------------
+
+En este laboratorio aprendí sobre los pequeños fallos que pueden ser cometidos en una empresa, hacer copias
+de respaldo en un lugar NO seguro, notas a los desarrolladores, etc.
+
+
+
